@@ -1,83 +1,454 @@
-const numeroSenha = document.querySelector('.parametro-senha__texto');
-let tamanhoSenha = 12;
-numeroSenha.textContent = tamanhoSenha;
+/* ELEMENTOS */
+const lengthInput = document.getElementById("length");
+const lengthValue = document.getElementById("lengthValue");
+const passwordEl = document.getElementById("password");
+const chamber = document.querySelector(".chamber");
+const particlesEl = document.getElementById("particles");
+const ambiguity = document.getElementById("ambiguity");
+const ambiguityText = document.getElementById("ambiguityText");
+const strengthIndicator = document.getElementById("strengthIndicator");
+const copyBtn = document.getElementById("copyBtn");
+const copyText = document.getElementById("copyText");
+const toast = document.getElementById("toast");
+const generateBtn = document.getElementById("generateBtn");
 
-const letrasMaiusculas = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-const letrasMinisculas = 'abcdefghijklmnopqrstuvwxyz';
-const numeros = '0123456789';
-const simbolos = '!@#$%&*?_+';
-const botoes = document.querySelectorAll('.parametro-senha__botao');
-const campoSenha = document.querySelector('#campo-senha');
-const checkbox = document.querySelectorAll('.chechbox');
-const forcaSenha = document.querySelector('.forca');
+/* CARACTERES */
+const pools = {
+    lowercase: "abcdefghijklmnopqrstuvwxyz",
+    uppercase: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    numbers: "0123456789",
+    symbols: "!@#$%&*+-_=?.:;"
+};
 
-botoes[0].onclick = diminuiTamanho;
-botoes[1].onclick = aumentaTamanho;
-function diminuiTamanho() {
-    if (tamanhoSenha > 1) {
-        //tamanhoSenha = tamanhoSenha-1;
-        tamanhoSenha--;
-    }
+/* CARACTERES AMBÍGUOS */
+const ambiguousCharacters = new Set([
+    "0", "O", "o",
+    "1", "I", "l", "|",
+    "2", "Z", "z",
+    "5", "S", "s",
+    "8", "B"
+]);
 
-    numeroSenha.textContent = tamanhoSenha;
-    geraSenha();
+/* REMOVE AMBIGUIDADE */
+function removeAmbiguousCharacters(text) {
+    return [...text]
+        .filter(character => !ambiguousCharacters.has(character))
+        .join("");
 }
 
-function aumentaTamanho() {
-    if (tamanhoSenha < 20) {
-        //tamanhoSenha = tamanhoSenha+1;
-        tamanhoSenha++;
+/* OBTÉM O POOL DISPONÍVEL */
+function getAvailablePool() {
+
+    let pool = "";
+
+    if (document.getElementById("lowercase").checked) {
+        pool += pools.lowercase;
     }
 
-    numeroSenha.textContent = tamanhoSenha;
-    geraSenha();
+    if (document.getElementById("uppercase").checked) {
+        pool += pools.uppercase;
+    }
+
+    if (document.getElementById("numbers").checked) {
+        pool += pools.numbers;
+    }
+
+    if (document.getElementById("symbols").checked) {
+        pool += pools.symbols;
+    }
+
+    if (!ambiguity.checked) {
+        pool = removeAmbiguousCharacters(pool);
+    }
+
+    return pool;
 }
 
-for(i=0; i < checkbox.length;i++){
-    checkbox[i].onclick = geraSenha;
+/* ALEATORIEDADE CRIPTOGRÁFICA */
+function secureRandom(max) {
+
+    const array = new Uint32Array(1);
+
+    crypto.getRandomValues(array);
+
+    return array[0] % max;
 }
 
-geraSenha();
-
-function geraSenha(){
-    let alfabeto = '';
-    if (checkbox[0].cheked){
-        alfabeto = alfabeto + letrasMaiusculas;
-    }
-    if (checkbox[1].cheked){
-        alfabeto = alfabeto + letrasMinusculas;
-    }
-     if (checkbox[2].cheked) {
-        alfabeto = alfabeto + numeros;
-    }
-    if (checkbox[3].cheked) {
-        alfabeto = alfabeto + simbolos;
-    }
-
-    let senha = '';
-    for(let i=0;i<tamanhoSenha;i++){
-        let numeroAleatorio = Math.random()*alfabeto.length;
-        numeroAleatorio = Math.floor(numeroAleatorio);
-        senha = senha + alfabeto[numeroAleatorio];
-
-    }
-
-    campoSenha.value = senha;
-    classificaSenha(alfabeto.length);
-   
+/* PEGA UM CARACTERE ALEATÓRIO */
+function randomCharacter(pool) {
+    return pool[secureRandom(pool.length)];
 }
- 
-function classificaSenha(tamanhoAlfabeto) {
-    let entropia = tamanhoSenha * Math.log2(tamanhoAlfabeto);
-    console.log(entropia);
-    forcaSenha.classList.remove('fraca', 'media', 'forte');
-    if (entropia > 57) {
-        forcaSenha.classList.add('forte');
-    } else if (entropia > 35 && entropia < 57) {
-        forcaSenha.classList.add('media');
-    } else if (entropia <= 35) {
-        forcaSenha.classList.add('fraca');
+
+/* OBTÉM AS CATEGORIAS SELECIONADAS */
+function getSelectedCategories() {
+
+    const categories = [];
+
+    if (document.getElementById("lowercase").checked) {
+        categories.push(pools.lowercase);
     }
-    const valorEntropia = document.querySelector('.entropia');
-    valorEntropia.textContent = "Um computador pode levar até " + Math.floor(2 ** entropia / (100e6 * 60 * 60 * 24)) + " dias para descobrir essa senha.";
+
+    if (document.getElementById("uppercase").checked) {
+        categories.push(pools.uppercase);
+    }
+
+    if (document.getElementById("numbers").checked) {
+        categories.push(pools.numbers);
+    }
+
+    if (document.getElementById("symbols").checked) {
+        categories.push(pools.symbols);
+    }
+
+    return categories;
 }
+
+/* GERA A SENHA */
+function generatePassword() {
+
+    const length = Number(lengthInput.value);
+    const categories = getSelectedCategories();
+
+    if (categories.length === 0) {
+
+        passwordEl.textContent = "selecione opções";
+
+        updateStrength(0);
+
+        return;
+    }
+
+    const pool = getAvailablePool();
+
+    if (!pool.length) {
+
+        passwordEl.textContent = "opções inválidas";
+
+        updateStrength(0);
+
+        return;
+    }
+
+    /*
+        É necessário haver pelo menos
+        um caractere de cada categoria.
+    */
+    if (categories.length > length) {
+
+        passwordEl.textContent = "aumente o tamanho";
+
+        updateStrength(0);
+
+        return;
+    }
+
+    const characters = [];
+
+    /* Garante pelo menos um de cada tipo */
+    for (const category of categories) {
+
+        let usableCategory = category;
+
+        if (!ambiguity.checked) {
+            usableCategory =
+                removeAmbiguousCharacters(category);
+        }
+
+        if (usableCategory.length > 0) {
+            characters.push(
+                randomCharacter(usableCategory)
+            );
+        }
+    }
+
+    /* Completa o restante */
+    while (characters.length < length) {
+
+        characters.push(
+            randomCharacter(pool)
+        );
+    }
+
+    /* Embaralha */
+    for (
+        let i = characters.length - 1;
+        i > 0;
+        i--
+    ) {
+
+        const j = secureRandom(i + 1);
+
+        [
+            characters[i],
+            characters[j]
+        ] = [
+            characters[j],
+            characters[i]
+        ];
+    }
+
+    /* Garante exatamente o tamanho escolhido */
+    const password = characters
+        .slice(0, length)
+        .join("");
+
+    animateGeneration(password);
+}
+
+/* ANIMAÇÃO DE GERAÇÃO */
+function animateGeneration(finalPassword) {
+
+    chamber.classList.add("generating");
+
+    particlesEl.innerHTML = "";
+
+    /* Partículas */
+    for (let i = 0; i < 20; i++) {
+
+        const particle =
+            document.createElement("span");
+
+        particle.className = "particle";
+
+        particle.style.left =
+            `${10 + secureRandom(90)}%`;
+
+        particle.style.top =
+            `${15 + secureRandom(70)}%`;
+
+        particle.style.setProperty(
+            "--dx",
+            `${secureRandom(70) - 35}px`
+        );
+
+        particle.style.setProperty(
+            "--dy",
+            `${secureRandom(50) - 25}px`
+        );
+
+        particle.style.animationDelay =
+            `${secureRandom(400)}ms`;
+
+        particlesEl.appendChild(particle);
+    }
+
+    /* Caracteres falsos durante o processamento */
+    const fakeCharacters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*+-_=?.:;";
+
+    let ticks = 0;
+
+    const totalTicks = 10;
+
+    const interval = setInterval(() => {
+
+        passwordEl.textContent =
+            Array.from(
+                { length: finalPassword.length },
+                () =>
+                    fakeCharacters[
+                        secureRandom(fakeCharacters.length)
+                    ]
+            ).join("");
+
+        ticks++;
+
+        if (ticks >= totalTicks) {
+
+            clearInterval(interval);
+
+            passwordEl.textContent =
+                finalPassword;
+
+            chamber.classList.remove(
+                "generating"
+            );
+
+            updateStrength(
+                finalPassword.length
+            );
+        }
+
+    }, 65);
+}
+
+/* INDICADOR DE FORÇA */
+function updateStrength(length) {
+
+    if (!length) {
+
+        strengthIndicator.style.left = "0%";
+
+        return;
+    }
+
+    const types = [
+        document.getElementById("lowercase").checked,
+        document.getElementById("uppercase").checked,
+        document.getElementById("numbers").checked,
+        document.getElementById("symbols").checked
+    ].filter(Boolean).length;
+
+    let score =
+        (length - 6) * 8 +
+        types * 14;
+
+    if (getAvailablePool().length > 65) {
+        score += 12;
+    }
+
+    score = Math.max(
+        5,
+        Math.min(100, score)
+    );
+
+    strengthIndicator.style.left =
+        `${score}%`;
+}
+
+/* ATUALIZA TAMANHO */
+function updateLength() {
+
+    const value =
+        Number(lengthInput.value);
+
+    lengthValue.textContent = value;
+
+    const percentage =
+        ((value - 6) / (12 - 6)) * 100;
+
+    lengthInput.style.background =
+        `linear-gradient(
+            to right,
+            #ddd 0%,
+            #ddd ${percentage}%,
+            #542525 ${percentage}%,
+            #542525 100%
+        )`;
+}
+
+/* AMBIGUIDADE */
+function updateAmbiguity() {
+
+    ambiguityText.textContent =
+        ambiguity.checked
+            ? "permitida"
+            : "removida";
+}
+
+/* COPIAR SENHA */
+function copyPassword() {
+
+    const value =
+        passwordEl.textContent.trim();
+
+    /*
+        Não permite copiar quando ainda
+        não existe uma senha.
+    */
+    if (
+        !value ||
+        value === "selecione opções" ||
+        value === "opções inválidas" ||
+        value === "aumente o tamanho" ||
+        chamber.classList.contains("generating")
+    ) {
+        return;
+    }
+
+    navigator.clipboard
+        .writeText(value)
+        .then(() => {
+
+            copyText.textContent =
+                "copiado";
+
+            toast.classList.add("show");
+
+            setTimeout(() => {
+
+                copyText.textContent =
+                    "copiar";
+
+                toast.classList.remove(
+                    "show"
+                );
+
+            }, 1300);
+        });
+}
+
+
+/* EVENTOS */
+
+/*
+    Alterar o tamanho apenas altera
+    a configuração.
+*/
+lengthInput.addEventListener(
+    "input",
+    updateLength
+);
+
+/*
+    Alterar ambiguidade apenas altera
+    o texto do interruptor.
+*/
+ambiguity.addEventListener(
+    "change",
+    updateAmbiguity
+);
+
+/*
+    Os ingredientes NÃO geram uma senha.
+    A senha só será gerada pelo botão.
+*/
+
+/* COPIAR */
+copyBtn.addEventListener(
+    "click",
+    copyPassword
+);
+
+/* GERAR */
+generateBtn.addEventListener(
+    "click",
+    generatePassword
+);
+
+/*
+    Depois que uma senha existir,
+    clicar nela gera outra.
+*/
+passwordEl.addEventListener(
+    "click",
+    () => {
+
+        if (passwordEl.textContent.trim()) {
+            generatePassword();
+        }
+
+    }
+);
+
+
+/* INICIALIZAÇÃO */
+
+/*
+    Apenas configura os controles.
+    Não gera nenhuma senha.
+*/
+updateLength();
+
+updateAmbiguity();
+
+/*
+    Garante que a área da senha
+    comece completamente vazia.
+*/
+passwordEl.textContent = "";
+
+/*
+    Indicador de força começa zerado.
+*/
+updateStrength(0);
