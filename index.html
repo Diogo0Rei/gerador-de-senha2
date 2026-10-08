@@ -1,66 +1,208 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de senhas</title>
+
+    <title>Laboratório de Senhas</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <section class="conteudo">
-        <div class="conteudo-titulo">
-            <img src="" alt="cadeado fechado">
-        <h2 class="titulo-principal">Gerador de Senhas</h2>
-        <h3 class="titulo-secundario">Gere Instantaneamente uma Senha aleatoria e segura</h3>
-        </div>
-        <div class="conteudo-senha">
-            <label for="senha">Senha</label>
-            <input name="senha" type="text" id="campo-senha">
-        </div>
-        <div class="parametro">
-            <h3 class="parametro-titulo">Personalize a sua senha</h3>
-            <div class="parametro-coluna__senha">
-                <div class="parametro-senha">
-                    <h4 class="parametro-senha__titulo">Numero de caracteres</h4>
-                    <div class="parametro-senha-botoes">
-                        <button class="parametro-senha__botao">-</button>
-                        <p class="parametro-senha__texto">12</p>
-                        <button class="parametro-senha__botao">+</button>
-                    </div>
+
+    <main class="lab">
+
+        <h1>Laboratório de senhas</h1>
+
+        <section class="machine">
+
+            <!-- TUBOS -->
+            <div class="pipe pipe-left"></div>
+            <div class="pipe pipe-right"></div>
+
+            <div class="pipe-bottom-left"></div>
+            <div class="pipe-bottom-right"></div>
+
+
+            <!-- TAMANHO -->
+            <section class="control-box size-box">
+
+                <h2>Tamanho</h2>
+
+                <div class="selected-length">
+                    <span id="lengthValue">8</span>
+                    <span>caracteres</span>
                 </div>
-                <div class="parametro-senha">
-                    <h4 class="parametro-senha__titulo">Caracteristicas da senha</h4>
-                    <div class="parametro-senha-checkbox">
-                        <input name="maiusculo" type="checkbox" checked>
-                        <label for="maiusculo">Letras maiusculas</label>
-                    </div>
-                    <div class="parametro-senha-checkbox">
-                        <input name="minusculo" type="checkbox" checked>
-                        <label for="minusculo">Letras minusculas</label>
-                    </div>
-                    <div class="parametro-senha-checkbox">
-                        <input name="numero" type="checkbox" checked>
-                        <label for="numero">Numeros</label>
-                    </div>
-                    <div class="parametro-senha-checkbox">
-                        <input name="simbolo" type="checkbox" checked>
-                        <label for="simbolo">Simbolos</label>
-                    </div>
+
+                <div class="range-wrap">
+                    <input
+                        id="length"
+                        type="range"
+                        min="6"
+                        max="12"
+                        value="8"
+                    >
                 </div>
-                <div class="parametro-senha">
-                    <h4 class="parametro-senha__titulo">Força da senha</h4>
-                    <div class="barra"></div>
-                    <div class="forca fraca"></div>
-                    <div class="parametro-senha-textos">
-                        <p>fraca</p>
-                        <p>Media</p>
-                        <p>Forte</p>
-                    </div>
-                    <p class="entropia"></p>
+
+                <div class="range-labels">
+                    <span>6</span>
+                    <span>12</span>
                 </div>
+
+            </section>
+
+
+            <!-- INGREDIENTES -->
+            <section class="control-box ingredients-box">
+
+                <h2>Ingredientes</h2>
+
+                <label>
+                    <input type="checkbox" id="lowercase" checked>
+                    <span class="fake-check"></span>
+                    minúsculas
+                </label>
+
+                <label>
+                    <input type="checkbox" id="uppercase" checked>
+                    <span class="fake-check"></span>
+                    maiúsculas
+                </label>
+
+                <label>
+                    <input type="checkbox" id="numbers" checked>
+                    <span class="fake-check"></span>
+                    números
+                </label>
+
+                <label>
+                    <input type="checkbox" id="symbols" checked>
+                    <span class="fake-check"></span>
+                    símbolos
+                </label>
+
+            </section>
+
+
+            <!-- AMBIGUIDADE -->
+            <section class="control-box ambiguity-box">
+
+                <h2>Ambiguidade</h2>
+
+                <label class="switch">
+
+                    <input
+                        type="checkbox"
+                        id="ambiguity"
+                        checked
+                    >
+
+                    <span class="slider">
+                        <span></span>
+                    </span>
+
+                </label>
+
+                <p id="ambiguityText">
+                    permitida
+                </p>
+
+            </section>
+
+
+            <!-- CÂMARA -->
+            <section class="chamber">
+
+                <div class="scanner"></div>
+
+                <div
+                    class="particles"
+                    id="particles"
+                ></div>
+
+                <div
+                    class="password"
+                    id="password"
+                    title="Clique para gerar outra senha"
+                ></div>
+
+                <button
+                    class="copy-btn"
+                    id="copyBtn"
+                    type="button"
+                >
+                    <span class="bolt">⚡</span>
+
+                    <span id="copyText">
+                        copiar
+                    </span>
+                </button>
+
+            </section>
+
+
+            <!-- STATUS -->
+            <div
+                class="status"
+                id="status"
+            >
+                voltagem de segurança
             </div>
-        </div>
-    </section>
+
+
+            <!-- FORÇA -->
+            <div class="strength">
+
+                <div class="strength-bar">
+
+                    <span class="segment weak"></span>
+                    <span class="segment medium"></span>
+                    <span class="segment strong"></span>
+
+                    <div
+                        class="strength-indicator"
+                        id="strengthIndicator"
+                    ></div>
+
+                </div>
+
+                <div class="strength-labels">
+
+                    <span>Fraco</span>
+                    <span>Média</span>
+                    <span>Forte</span>
+
+                </div>
+
+            </div>
+
+
+            <!-- BOTÃO -->
+            <button
+                class="generate-btn"
+                id="generateBtn"
+                type="button"
+            >
+                ⚗ GERAR NOVA SENHA
+            </button>
+
+        </section>
+
+    </main>
+
+
+    <div
+        class="toast"
+        id="toast"
+    >
+        Senha copiada!
+    </div>
+
+
+    <script src="script.js"></script>
+
 </body>
+
 </html>
